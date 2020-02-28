@@ -2,15 +2,9 @@ package cust.aowei.jwtstudy.model;
 
 
 /**
- * ========================
- * 通用响应状态
- * Created with IntelliJ IDEA.
- * User：pyy
- * Date：2019/6/6
- * Time：10:10
- * Version: v1.0
- * ========================
+ * @author aowei
  */
+
 public enum ResultCode {
 
     /* 成功状态码 */
