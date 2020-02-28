@@ -1,4 +1,1 @@
-jwt:
-  config:
-    key: aowei
-    ttl: 3600000
+

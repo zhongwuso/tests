@@ -1,5 +1,7 @@
 package cust.aowei.jwtstudy.controller;
 
+import cust.aowei.jwtstudy.annotation.JwtIgnore;
+import cust.aowei.jwtstudy.exception.CustomException;
 import cust.aowei.jwtstudy.model.Result;
 import cust.aowei.jwtstudy.model.ResultCode;
 import cust.aowei.jwtstudy.model.Role;
@@ -7,7 +9,7 @@ import cust.aowei.jwtstudy.model.User;
 import cust.aowei.jwtstudy.service.RoleService;
 import cust.aowei.jwtstudy.service.UserService;
 import cust.aowei.jwtstudy.util.JwtUtils;
-import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,20 +21,20 @@ import java.util.Map;
 /**
  * @author aowei
  */
+@Slf4j
 @RestController
 public class Login {
-    @Autowired
-    JwtUtils jwtUtils;
     @Autowired
     UserService userService;
     @Autowired
     RoleService roleService;
 
     @RequestMapping(value = "/login",method = RequestMethod.POST)
-    public Result login(String username, String password){
+    @JwtIgnore
+    public Result login(String username, String password) throws CustomException {
         User user = userService.findByUsername(username);
         if(user == null || !user.getPassword().equals(password)){
-            return new Result(ResultCode.MOBILEORPASSWORDERROR);
+            return new Result(ResultCode.FAIL);
         } else {
 //             登录成功
 //             获取到所有的可访问api权限
@@ -47,13 +49,11 @@ public class Login {
             Map<String,Object> map = new HashMap<>();
             // 可访问的角色
             map.put("roles",role.getRoleName());
-            String token = jwtUtils.createJwt(username,username,map);
-
-            Claims claims = jwtUtils.parseJwt(token);
-            System.out.println(claims.getId());
-            System.out.println(claims.getSubject());
-            System.out.println(claims.get("roles"));
-
+            String token = JwtUtils.createJwt(username,username,map);
+//            Claims claims = JwtUtils.parseJwt(token);
+//            System.out.println("角色："+claims.get("roles"));
+//            System.out.println("用户名："+claims.getSubject());
+//            System.out.println("用户id："+claims.getId());
             Result result = new Result(ResultCode.SUCCESS);
             result.setData(token);
             return result;
@@ -80,6 +80,7 @@ public class Login {
 
     // 测试不拦截的url（不需要登录）
     @RequestMapping("/test")
+    @JwtIgnore
     public Result test(){
         return new Result(ResultCode.SUCCESS);
     }

@@ -1,9 +1,12 @@
 package cust.aowei.jwtstudy.interceptor;
 
-import cust.aowei.jwtstudy.exception.CommonException;
+import cust.aowei.jwtstudy.annotation.JwtIgnore;
+import cust.aowei.jwtstudy.exception.CustomException;
+import cust.aowei.jwtstudy.model.Result;
 import cust.aowei.jwtstudy.model.ResultCode;
 import cust.aowei.jwtstudy.util.JwtUtils;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 
 @Component
+@Slf4j
 public class JwtInterceptor extends HandlerInterceptorAdapter {
 
     /**
@@ -38,11 +42,18 @@ public class JwtInterceptor extends HandlerInterceptorAdapter {
      * 从token中解析获取claims
      * 将claims绑定到request域中
      */
-    @Autowired
-    JwtUtils jwtUtils;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 忽略带JwtIgnore注解的请求, 不做后续token认证校验
+        if (handler instanceof HandlerMethod) {
+            HandlerMethod handlerMethod = (HandlerMethod) handler;
+            JwtIgnore jwtIgnore = handlerMethod.getMethodAnnotation(JwtIgnore.class);
+            if (jwtIgnore != null) {
+                return true;
+            }
+        }
+
         // 通过request获取请求token信息
         String authorization = request.getHeader("Authorization");
         // 判断请求头信息是否为空，或是否以Bearer 开头
@@ -50,25 +61,29 @@ public class JwtInterceptor extends HandlerInterceptorAdapter {
             // 获取token数据
             String token = authorization.replace("Bearer","");
             // 解析token获取claims
-            Claims claims = jwtUtils.parseJwt(token);
+            Claims claims = JwtUtils.parseJwt(token);
             if(claims != null){
                 // 通过claims获取到当前用户的可访问api权限字符串
                 String apis = (String) claims.get("roles");
                 // 通过handler
-                HandlerMethod h = (HandlerMethod) handler;
-                // 获取接口上的requestmapping注解
-                RequestMapping annotation = h.getMethodAnnotation(RequestMapping.class);
-                // 获取当前请求接口中的name属性
-                String name = annotation.name();
+                String name = null;
+                if (handler instanceof HandlerMethod) {
+                    HandlerMethod h = (HandlerMethod) handler;
+                    // 获取接口上的requestmapping注解
+                    RequestMapping annotation = h.getMethodAnnotation(RequestMapping.class);
+                    // 获取当前请求接口中的name属性
+                    name = annotation.name();
+                }else {
+                    throw new CustomException(ResultCode.INTERFACE_ADDRESS_INVALID);
+                }
                 if(apis.contains(name)){
                     request.setAttribute("userClaims",claims);
                     return true;
                 }else{
-                    throw new CommonException(ResultCode.UNAUTHORISE);
+                    throw new CustomException(ResultCode.PERMISSION_UNAUTHORISE);
                 }
-
             }
         }
-        throw new CommonException(ResultCode.UNAUTHENTICATED);
+        throw new CustomException(ResultCode.USER_NOT_LOGGED_IN);
     }
 }

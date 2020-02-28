@@ -1,9 +1,7 @@
 package cust.aowei.jwtstudy;
 
-import cust.aowei.jwtstudy.util.JwtUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class JwtStudyApplication {
@@ -12,8 +10,4 @@ public class JwtStudyApplication {
         SpringApplication.run(JwtStudyApplication.class, args);
     }
 
-    @Bean
-    public JwtUtils jwtUtils() {
-        return new JwtUtils();
-    }
 }
