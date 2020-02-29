@@ -1,8 +1,10 @@
 # JWT-study
 
-#### 介绍
+## 介绍
 
 SpringBoot 集成 JWT 实现 token 鉴权
+
+教学视频地址：https://www.bilibili.com/video/av75572951?p=108
 
 ### 实现的功能  
 
